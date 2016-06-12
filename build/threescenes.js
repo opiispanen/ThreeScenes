@@ -5,8 +5,10 @@
             camera, 
             renderer,
             renderFunc,
+            animFunc = false,
             composer = false,
-            objArray = [];
+            autoPlay = typeof obj.autoPlay !== 'undefined' ? obj.autoPlay : true;
+            objects = [];
         
         var init = function() {
             var doc = document,
@@ -16,41 +18,46 @@
                 cy = obj.camera && obj.camera.y ? obj.camera.y : 5,
                 cz = obj.camera && obj.camera.z ? obj.camera.z : 5;
             
-            objArray = obj.objArray;
+            if (obj.objects)
+                objects = obj.objects;
+            else if (obj.objArray)
+                objects = obj.objArray; console.warn('ThreeScenes: objArray will be deprecated');
+            
             scene = new THREE.Scene();
-			camera = new THREE.PerspectiveCamera(75, win.innerWidth/win.innerHeight, 0.1, 1000);
+			camera = new THREE.PerspectiveCamera(75, win.innerWidth/win.innerHeight, 0.1, 5000);
 
-			renderer = new THREE.WebGLRenderer({ alpha: true, antialiasing: true });
+            if (window.WebGLRenderingContext)
+			    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            else 
+                renderer = new THREE.CanvasRenderer({ alpha: true });
+
 			renderer.setSize(win.innerWidth, win.innerHeight);
             
 			elem.appendChild(renderer.domElement);
             
             camera.position.set(cx,cy,cz);
 
-            var i = objArray.length - 1;
+            var i = objects.length;
 
-            while (i > -1) {
-                if (objArray[i].elem != undefined) {
-                    scene.add(objArray[i].elem);
-                    if (objArray[i].init != undefined) {
-                        objArray[i].init();
-                    }    
+            while (i--) {
+                if (objects[i].elem != undefined) {
+                    
+                    scene.add(objects[i].elem);
+
+                    if (objects[i].init != undefined)
+                        objects[i].init();
                 }
-                i--;
             }
             
             if (obj.postProcessing) {
                 composer = new THREE.EffectComposer(renderer);
 				composer.addPass(new THREE.RenderPass( scene, camera ));
                 
-                var i = obj.postProcessing.length - 1;
+                var i = obj.postProcessing.length;
                 
-                while (i > -1) {
-                    if (obj.postProcessing[i] != undefined) {
-                        var effect = obj.postProcessing[i]();
-                        composer.addPass(effect);
-                    }
-                    i--;
+                while (i--) {
+                    if (obj.postProcessing[i] != undefined) 
+                        composer.addPass(obj.postProcessing[i]());
                 }
                 
                 renderFunc = function() {
@@ -61,48 +68,45 @@
                     renderer.render(scene, camera);
                 };
             }
+            
+            if (obj.animFunc)
+                animFunc = obj.animFunc;
         };
         
         var anim = function() {
             requestAnimationFrame(anim);
             
+            render();
+        };
+
+        var render = function() {
             camera.lookAt(scene.position);
             
-            var i = objArray.length - 1;
+            var i = objects.length;
 
-            while (i > -1) {
-                if (objArray[i].anim != undefined) {
-                    objArray[i].anim();
-                }
-                i--;
+            while (i--) {
+                if (objects[i].anim != undefined)
+                    objects[i].anim();
             }
+            
+            if (animFunc)
+                animFunc(camera);
             
             renderFunc();
         };
         
         init();
-        anim();
+
+        if (autoPlay)
+            anim();
+
+        return render;
     }
     
-    var helper = {};
-        
-    helper.textSprite = function() {
-        var canvas = document.createElement('canvas');
-        canvas.width = 600;
-        canvas.height = 200;
-        var context = canvas.getContext('2d');
-        context.font="30px Verdana";
-        context.fillText("ThreeScenes", 600, 200);
-
-        var texture = new THREE.Texture(canvas);
-        texture.needsUpdate = true;
-        var sprite = new THREE.Sprite({
-            map: texture,
-            transparent: true,
-            useScreenCoordinates: false
-        });
-
-        return texture;
+    var helper = {
+        degToRad: function(deg) {
+            return deg * (Math.PI / 180);
+        }
     };
     
     window._3helper = helper;
