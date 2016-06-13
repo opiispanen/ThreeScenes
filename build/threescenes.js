@@ -14,6 +14,10 @@
             var doc = document,
                 win = window,
                 elem = obj.elem ? obj.elem : doc.body,
+                canvas = {
+                    width: typeof obj.size.width !== 'undefined' ? obj.size.width : win.innerWidth,
+                    height: typeof obj.size.height !== 'undefined' ? obj.size.height : win.innerHeight
+                },
                 cx = obj.camera && obj.camera.x ? obj.camera.x : 0,
                 cy = obj.camera && obj.camera.y ? obj.camera.y : 5,
                 cz = obj.camera && obj.camera.z ? obj.camera.z : 5;
@@ -24,14 +28,14 @@
                 objects = obj.objArray; console.warn('ThreeScenes: objArray will be deprecated');
             
             scene = new THREE.Scene();
-			camera = new THREE.PerspectiveCamera(75, win.innerWidth/win.innerHeight, 0.1, 5000);
+			camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 5000);
 
             if (window.WebGLRenderingContext)
 			    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             else 
                 renderer = new THREE.CanvasRenderer({ alpha: true });
 
-			renderer.setSize(win.innerWidth, win.innerHeight);
+			renderer.setSize(canvas.width, canvas.height);
             
 			elem.appendChild(renderer.domElement);
             
