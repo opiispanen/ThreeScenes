@@ -90,11 +90,11 @@
 
             while (i--) {
                 if (objects[i].anim != undefined)
-                    objects[i].anim();
+                    objects[i].anim.call(objects[i]);
             }
             
             if (animFunc)
-                animFunc(camera);
+                animFunc.call(obj, camera);
             
             renderFunc();
         };
